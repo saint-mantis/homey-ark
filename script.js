@@ -85,6 +85,88 @@ filterBtns.forEach(btn => {
     });
 });
 
+// Testimonials Carousel
+const testimonialsGrid = document.querySelector('.testimonials-grid');
+const prevBtn = document.querySelector('.testimonial-prev');
+const nextBtn = document.querySelector('.testimonial-next');
+let testimonialIndex = 0;
+let autoSlideInterval;
+
+function getVisibleTestimonials() {
+    if (window.innerWidth <= 568) return 1;
+    if (window.innerWidth <= 968) return 2;
+    return 3;
+}
+
+function getScrollAmount() {
+    const testimonialItem = document.querySelector('.testimonial-item');
+    if (!testimonialItem) return 0;
+    const itemWidth = testimonialItem.offsetWidth;
+    const gap = 32; // 2rem gap
+    return itemWidth + gap;
+}
+
+function scrollTestimonials(direction) {
+    const scrollAmount = getScrollAmount();
+    const visibleItems = getVisibleTestimonials();
+    const totalItems = document.querySelectorAll('.testimonial-item').length;
+    const maxIndex = totalItems - visibleItems;
+
+    if (direction === 'next') {
+        testimonialIndex++;
+        if (testimonialIndex > maxIndex) {
+            testimonialIndex = 0;
+        }
+    } else {
+        testimonialIndex--;
+        if (testimonialIndex < 0) {
+            testimonialIndex = maxIndex;
+        }
+    }
+
+    testimonialsGrid.scrollTo({
+        left: testimonialIndex * scrollAmount,
+        behavior: 'smooth'
+    });
+}
+
+function startAutoSlide() {
+    autoSlideInterval = setInterval(() => {
+        scrollTestimonials('next');
+    }, 5000); // Auto-slide every 5 seconds
+}
+
+function stopAutoSlide() {
+    clearInterval(autoSlideInterval);
+}
+
+if (prevBtn && nextBtn && testimonialsGrid) {
+    prevBtn.addEventListener('click', () => {
+        stopAutoSlide();
+        scrollTestimonials('prev');
+        startAutoSlide();
+    });
+
+    nextBtn.addEventListener('click', () => {
+        stopAutoSlide();
+        scrollTestimonials('next');
+        startAutoSlide();
+    });
+
+    // Pause auto-slide on hover
+    testimonialsGrid.addEventListener('mouseenter', stopAutoSlide);
+    testimonialsGrid.addEventListener('mouseleave', startAutoSlide);
+
+    // Start auto-slide
+    startAutoSlide();
+
+    // Reset on window resize
+    window.addEventListener('resize', () => {
+        testimonialIndex = 0;
+        testimonialsGrid.scrollTo({ left: 0, behavior: 'smooth' });
+    });
+}
+
 // Intersection Observer for Animations
 const observerOptions = {
     threshold: 0.1,
@@ -122,6 +204,74 @@ newsletterForm.addEventListener('submit', (e) => {
         newsletterForm.querySelector('input').value = '';
     }
 });
+
+// Contact Form Submission to Google Sheets
+const contactForm = document.getElementById('contactForm');
+
+if (contactForm) {
+    contactForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const submitBtn = contactForm.querySelector('.submit-btn');
+        const btnText = submitBtn.querySelector('.btn-text');
+        const btnLoader = submitBtn.querySelector('.btn-loader');
+        const formMessage = contactForm.querySelector('.form-message');
+        
+        // Show loader
+        btnText.style.display = 'none';
+        btnLoader.style.display = 'inline-block';
+        submitBtn.disabled = true;
+        formMessage.style.display = 'none';
+        
+        // Get form data
+        const formData = new FormData(contactForm);
+        const data = {
+            name: formData.get('name'),
+            email: formData.get('email'),
+            phone: formData.get('phone'),
+            service: formData.get('service'),
+            message: formData.get('message'),
+            timestamp: new Date().toLocaleString()
+        };
+        
+        try {
+            // Replace this URL with your Google Apps Script Web App URL
+            const scriptURL = 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
+            
+            const response = await fetch(scriptURL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            });
+            
+            // Show success message
+            formMessage.textContent = 'Thank you! Your message has been sent successfully. We will get back to you soon.';
+            formMessage.className = 'form-message success';
+            formMessage.style.display = 'block';
+            contactForm.reset();
+            
+        } catch (error) {
+            console.error('Error:', error);
+            // Show error message
+            formMessage.textContent = 'Oops! Something went wrong. Please try again or contact us directly.';
+            formMessage.className = 'form-message error';
+            formMessage.style.display = 'block';
+        } finally {
+            // Hide loader
+            btnText.style.display = 'inline';
+            btnLoader.style.display = 'none';
+            submitBtn.disabled = false;
+            
+            // Hide message after 5 seconds
+            setTimeout(() => {
+                formMessage.style.display = 'none';
+            }, 5000);
+        }
+    });
+}
 
 // Add parallax effect to hero section
 window.addEventListener('scroll', () => {
