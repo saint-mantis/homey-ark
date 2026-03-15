@@ -1398,10 +1398,19 @@ body {
 
     .hero-buttons {
         justify-content: center;
+        position: relative;
+        z-index: 6;
+    }
+
+    .hero-text {
+        position: relative;
+        z-index: 5;
     }
 
     .hero-image {
         order: -1;
+        position: relative;
+        z-index: 1;
     }
 
     .partners-grid {
@@ -1471,6 +1480,8 @@ body {
     .hero-buttons {
         flex-direction: column;
         width: 100%;
+        position: relative;
+        z-index: 6;
     }
 
     .hero-buttons .btn {
